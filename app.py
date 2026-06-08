@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
-import psycopg2, uuid, json
+import psycopg2
+import uuid
+import json
 from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
@@ -10,7 +12,7 @@ def get_db():
     return psycopg2.connect(URL_DB)
 
 @app.route('/')
-def inicio():
+def index():
     if 'vendedor' not in session: return "Acceso denegado", 403
     return render_template('pos.html')
 
@@ -32,7 +34,7 @@ def generar_link():
 def registrar(token):
     if request.method == 'POST':
         session['vendedor'] = f"{request.form['nombre']} {request.form['ap_materno']}"
-        return redirect(url_for('inicio'))
+        return redirect(url_for('index'))
     return render_template('registro.html')
 
 if __name__ == '__main__':
