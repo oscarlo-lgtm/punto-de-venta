@@ -1,6 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, session
-import psycopg2
-from psycopg2.extras import RealDictCursor
+from flask import Flask, render_template, request, redirect, session
+
+app = Flask(__name__, static_folder='static')
+app.secret_key = 'JEJA_SECRETO_2026'
+# ... el resto de tu código de base de datos sigue igual aquí abajo ...
 
 app = Flask(__name__)
 app.secret_key = 'JEJA_SECRETO_2026'
