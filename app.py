@@ -5,13 +5,13 @@ from psycopg2.extras import RealDictCursor
 app = Flask(__name__, static_folder='static')
 app.secret_key = 'JEJA_SECRETO_2026'
 
-# Conexión a tu base de datos
+# Tu conexión a Supabase
 URL_DB = "postgresql://postgres.zivpdzxvukcovqjekxpz:B0mb0nsit03@aws-1-us-west-2.pooler.supabase.com:5432/postgres"
 
 def get_db():
     return psycopg2.connect(URL_DB)
 
-# --- RUTAS DE AUTENTICACIÓN ---
+# --- RUTAS DE LOGIN Y REGISTRO ---
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -41,13 +41,27 @@ def registro():
         return redirect('/')
     return render_template('registro.html')
 
-# --- LÓGICA DE TU POS ---
+# --- LÓGICA DE TU POS (LO QUE FALTA SEGÚN TÚ) ---
 
-@app.route('/pos')
+@app.route('/pos', methods=['GET', 'POST'])
 def pos():
     if 'vendedor' not in session: return redirect('/')
-    # Aquí va la carga de tu POS original
-    return render_template('pos.html')
+    
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    # Si quieres procesar una venta desde el mismo POS:
+    if request.method == 'POST':
+        cur.execute("INSERT INTO ventas (producto, precio) VALUES (%s, %s)", 
+                    (request.form['producto'], request.form['precio']))
+        conn.commit()
+    
+    # Cargar ventas para mostrarlas
+    cur.execute("SELECT * FROM ventas ORDER BY id DESC")
+    ventas = cur.fetchall()
+    cur.close(); conn.close()
+    
+    return render_template('pos.html', ventas=ventas)
 
 @app.route('/logout')
 def logout():
