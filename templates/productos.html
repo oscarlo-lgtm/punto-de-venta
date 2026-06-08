@@ -144,3 +144,14 @@ function copiarLink() {
 </script>
 </body>
 </html>
+<div id="admin-section">
+    <button onclick="generar()">Generar Link</button>
+    <input type="text" id="linkGenerado" readonly>
+</div>
+<script>
+function generar() {
+    fetch('/generar_link', { method: 'POST' })
+    .then(r => r.json())
+    .then(d => document.getElementById('linkGenerado').value = d.link);
+}
+</script>
