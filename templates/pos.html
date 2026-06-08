@@ -104,8 +104,18 @@
                                 <span class="d-block mt-2 small">El carrito está vacío.<br>Selecciona un artículo del catálogo.</span>
                             </div>
                         </div>
+                        
                         <div class="mt-auto">
                             <div class="total-display mb-3" id="total-general-publico">$0.00</div>
+                            
+                            <div class="row g-2 mb-2">
+                                <div class="col-12">
+                                    <button class="btn btn-info w-100 py-2 fw-bold text-white" onclick="generarPresupuesto()">
+                                        <i class="bi bi-file-earmark-text"></i> Generar Presupuesto
+                                    </button>
+                                </div>
+                            </div>
+
                             <div class="row g-2">
                                 <div class="col-6">
                                     <button class="btn btn-outline-danger w-100 py-2 fw-bold" onclick="cancelarVenta()"><i class="bi bi-trash"></i> Cancelar</button>
@@ -212,4 +222,114 @@
         function renderizarCarrito() {
             const contenedor = document.getElementById('contenedor-carrito');
             const vacioMsg = document.getElementById('carrito-vacio-msg');
+            
+            // Limpiar items viejos
             document.querySelectorAll('.cart-item').forEach(el => el.remove());
+
+            if (carrito.length === 0) {
+                vacioMsg.style.setProperty('display', 'block', 'important');
+                document.getElementById('total-general-publico').innerText = "$0.00";
+                return;
+            } else {
+                vacioMsg.style.setProperty('display', 'none', 'important');
+            }
+
+            let totalVenta = 0;
+
+            carrito.forEach((item, index) => {
+                totalVenta += item.precio_total_renglon;
+                
+                let extrasBadges = item.extras.map(ex => `<span class="extra-badge">+ ${ex.nombre}</span>`).join('');
+                let fotoHtml = item.imagen_url ? `<img src="${item.imagen_url}" class="cart-item-img">` : `<div class="cart-item-icon-placeholder"><i class="bi bi-box-seam"></i></div>`;
+
+                let fila = document.createElement('div');
+                fila.className = 'cart-item';
+                fila.innerHTML = `
+                    ${fotoHtml}
+                    <div class="cart-item-info">
+                        <div class="cart-item-name">${item.nombre}</div>
+                        <div>${extrasBadges}</div>
+                        <div class="small text-success fw-bold mt-1">$${item.precio_total_renglon.toFixed(2)}</div>
+                    </div>
+                    <button class="btn btn-sm text-danger fs-5 p-1" onclick="eliminarDelCarrito(${index})"><i class="bi bi-x-circle-fill"></i></button>
+                `;
+                contenedor.appendChild(fila);
+            });
+
+            document.getElementById('total-general-publico').innerText = "$" + totalVenta.toFixed(2);
+        }
+
+        function eliminarDelCarrito(index) {
+            carrito.splice(index, 1);
+            renderizarCarrito();
+        }
+
+        function cancelarVenta() {
+            if(confirm("¿Seguro que deseas vaciar el carrito?")) {
+                carrito = [];
+                renderizarCarrito();
+            }
+        }
+
+        function procesarCobro() {
+            if(carrito.length === 0) {
+                alert("El carrito está vacío.");
+                return;
+            }
+            
+            let totalVenta = 0;
+            carrito.forEach(i => totalVenta += i.precio_total_renglon);
+
+            fetch('/guardar_ticket', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ total: totalVenta, productos: carrito })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    alert("¡Venta procesada con éxito!");
+                    window.open('/imprimir/' + data.ticket_id, '_blank');
+                    carrito = [];
+                    renderizarCarrito();
+                } else {
+                    alert("Error al procesar la venta.");
+                }
+            });
+        }
+
+        // NUEVA FUNCIÓN: Envía el presupuesto sin tocar almacén ni caja
+        function generarPresupuesto() {
+            if (carrito.length === 0) {
+                alert("⚠️ El carrito está vacío. Agrega productos para cotizar.");
+                return;
+            }
+            
+            let totalPresupuesto = 0;
+            carrito.forEach(i => { totalPresupuesto += i.precio_total_renglon; });
+
+            fetch('/guardar_presupuesto', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    tipo: "Presupuesto", 
+                    total: totalPresupuesto, 
+                    productos: carrito 
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) { 
+                    alert("📋 ¡Presupuesto generado con éxito!");
+                    // Abre la pestaña de impresión exclusiva de presupuesto
+                    window.open('/imprimir_presupuesto/' + data.presupuesto_id, '_blank');
+                    carrito = []; 
+                    renderizarCarrito(); 
+                } else {
+                    alert("❌ Hubo un error al generar el presupuesto.");
+                }
+            });
+        }
+    </script>
+</body>
+</html>
