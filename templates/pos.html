@@ -1,14 +1,8 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Punto de Venta</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
+<html>
 <body>
-    <div id="app">
-        <h1>Sistema de Ventas</h1>
-        </div>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <h1>Bienvenido al Sistema de Ventas</h1>
+    <p>Sesión activa para: {{ session['vendedor'] }}</p>
+    <button onclick="window.location.href='/inventario'">Volver al Inventario</button>
 </body>
 </html>
