@@ -1,14 +1,25 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro JEJA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
 <body>
-    <h2>Registro de Nuevo Usuario</h2>
+    <div class="jeja-container">
+        <span class="j1">J</span><span class="j2">E</span><span class="j3">J</span><span class="j4">A</span>
+    </div>
     <form method="POST">
-        <input type="text" name="nombre" placeholder="Nombre(s)" required><br>
-        <input type="text" name="ap_paterno" placeholder="Apellido Paterno" required><br>
-        <input type="text" name="ap_materno" placeholder="Apellido Materno" required><br>
-        <input type="text" name="celular" placeholder="Número de Celular" required><br>
-        <input type="password" name="password" placeholder="Crear Contraseña" required><br>
-        <button type="submit">Finalizar Registro</button>
+        <h2>Registro de Usuario</h2>
+        <input type="text" name="nombre" placeholder="Nombre(s)" required>
+        <input type="text" name="ap_paterno" placeholder="Apellido Paterno" required>
+        <input type="text" name="ap_materno" placeholder="Apellido Materno" required>
+        <input type="text" name="celular" placeholder="Número de Celular" required>
+        <input type="password" name="password" placeholder="Crear Contraseña" required>
+        <button type="submit">CREAR CUENTA</button>
+        <p style="text-align:center; margin-top:15px;">
+            <a href="/" style="color:white; text-decoration:none;">¿Ya tienes cuenta? Inicia sesión</a>
+        </p>
     </form>
 </body>
 </html>
