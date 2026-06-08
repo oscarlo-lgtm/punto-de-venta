@@ -7,8 +7,9 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
-# CADENA DE CONEXIÓN A TU BASE DE DATOS ETERNA EN LA NUBE
+# CADENA DE CONEXIÓN A TU BASE DE DATOS ETERNA EN LA NUBE (Oregón - IPv4 Compatible)
 URL_BASE_DATOS = "postgresql://postgres.zivpdzxvukcovqjekxpz:B0mb0nsit03@aws-1-us-west-2.pooler.supabase.com:5432/postgres"
+
 # CONFIGURACIÓN PARA SUBIR ARCHIVOS LOCALES
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 CARPETA_SUBIDAS = os.path.join(BASE_DIR, 'static', 'uploads')
@@ -27,6 +28,7 @@ def iniciar_base_datos():
     conexion = conectar_bd()
     cursor = conexion.cursor()
     
+    # Tabla de productos
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS productos (
             id SERIAL PRIMARY KEY,
@@ -37,15 +39,24 @@ def iniciar_base_datos():
         )
     ''')
     
+    # Tabla de extras (¡Actualizada con columna de imagen!)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS extras (
             id SERIAL PRIMARY KEY,
             nombre TEXT NOT NULL,
             costo_compra REAL NOT NULL,
-            precio_venta REAL NOT NULL
+            precio_venta REAL NOT NULL,
+            imagen_url TEXT
         )
     ''')
     
+    # Si la tabla extras ya existía de antes, le agregamos la columna imagen_url si no la tiene
+    try:
+        cursor.execute("ALTER TABLE extras ADD COLUMN IF NOT EXISTS imagen_url TEXT;")
+    except Exception as e:
+        print("La columna imagen_url ya existía o se gestionó correctamente.")
+    
+    # Tabla de tickets
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS tickets (
             id SERIAL PRIMARY KEY,
@@ -130,7 +141,8 @@ def imprimir_ticket(ticket_id):
                 lista_productos = json.loads(ticket['detalles'])
             except:
                 lista_productos = []
-        return render_template('imprimir.html', ticket=ticket, lista_productos=lista_productos)
+        # Pasamos el nombre correcto de la marca directo al render
+        return render_template('imprimir.html', ticket=ticket, lista_productos=lista_productos, nombre_pos="PUNTO DE VENTA JEJA", lema="(Juntos Empezamos Juntos Avanzamos)")
     return "Ticket no encontrado", 404
 
 
@@ -165,10 +177,19 @@ def guardar_extra():
     costo_compra = float(request.form.get('costo_compra', 0.0))
     precio_venta = float(request.form.get('precio_venta', 0.0))
     
+    # ¡NUEVO!: Procesar el botón para agregar fotos también en los Extras
+    ruta_imagen = ""
+    if 'foto_extra' in request.files:
+        archivo = request.files['foto_extra']
+        if archivo and archivo.filename != '' and archivo_permitido(archivo.filename):
+            nombre_limpio = secure_filename(archivo.filename)
+            archivo.save(os.path.join(app.config['UPLOAD_FOLDER'], nombre_limpio))
+            ruta_imagen = f"/static/uploads/{nombre_limpio}"
+            
     conexion = conectar_bd()
     cursor = conexion.cursor()
-    cursor.execute('INSERT INTO extras (nombre, costo_compra, precio_venta) VALUES (%s, %s, %s)', 
-                   (nombre, costo_compra, precio_venta))
+    cursor.execute('INSERT INTO extras (nombre, costo_compra, precio_venta, imagen_url) VALUES (%s, %s, %s, %s)', 
+                   (nombre, costo_compra, precio_venta, ruta_imagen))
     conexion.commit()
     cursor.close()
     conexion.close()
@@ -253,5 +274,4 @@ def guardar_ticket():
         return jsonify({"success": False})
 
 if __name__ == '__main__':
-    # Ponemos use_reloader=False para evitar el molesto error win32 de la terminal
     app.run(debug=True, use_reloader=False)
