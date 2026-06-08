@@ -120,5 +120,27 @@
             </div>
         </div>
     </div>
+<div class="card mt-4 p-3 border-primary">
+    <h5>Generar Enlace de Vendedor</h5>
+    <button class="btn btn-primary" onclick="generarLink()">Generar Link</button>
+    <div class="mt-2">
+        <input type="text" id="linkGenerado" class="form-control" readonly>
+        <button class="btn btn-sm btn-secondary mt-1" onclick="copiarLink()">Copiar</button>
+    </div>
+</div>
+
+<script>
+function generarLink() {
+    fetch('/generar_link', { method: 'POST' })
+    .then(r => r.json())
+    .then(d => document.getElementById('linkGenerado').value = d.link);
+}
+function copiarLink() {
+    let copyText = document.getElementById("linkGenerado");
+    copyText.select();
+    document.execCommand("copy");
+    alert("Copiado");
+}
+</script>
 </body>
 </html>
