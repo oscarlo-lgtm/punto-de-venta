@@ -1,5 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
-import psycopg2, uuid
+from flask import Flask, render_template, request, redirect, url_for, session
+import psycopg2
 from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
@@ -9,30 +9,38 @@ URL_DB = "postgresql://postgres.zivpdzxvukcovqjekxpz:B0mb0nsit03@aws-1-us-west-2
 def get_db():
     return psycopg2.connect(URL_DB)
 
-@app.route('/')
-def index():
-    if 'vendedor' not in session: return "Acceso denegado. <a href='/inventario'>Ve a generar tu link</a>", 403
+@app.route('/', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        celular = request.form['celular']
+        password = request.form['password']
+        conn = get_db()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT * FROM usuarios WHERE celular = %s AND password = %s", (celular, password))
+        usuario = cur.fetchone()
+        cur.close(); conn.close()
+        
+        if usuario:
+            session['vendedor'] = usuario['nombre']
+            return redirect(url_for('inicio'))
+        return "Usuario o contraseña incorrectos"
+    return render_template('login.html')
+
+@app.route('/inicio')
+def inicio():
+    if 'vendedor' not in session: return redirect(url_for('login'))
     return render_template('pos.html')
-
-@app.route('/inventario')
-def inventario():
-    return render_template('productos.html')
-
-@app.route('/generar_link', methods=['POST'])
-def generar_link():
-    token = str(uuid.uuid4())
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute('INSERT INTO invitaciones (token, usado) VALUES (%s, %s)', (token, False))
-    conn.commit()
-    cur.close(); conn.close()
-    return jsonify({"link": f"https://puntodeventa-bdc9.onrender.com/registrar/{token}"})
 
 @app.route('/registrar/<token>', methods=['GET', 'POST'])
 def registrar(token):
     if request.method == 'POST':
-        session['vendedor'] = f"{request.form['nombre']} {request.form['ap_materno']}"
-        return redirect(url_for('index'))
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("INSERT INTO usuarios (nombre, ap_paterno, ap_materno, celular, password) VALUES (%s, %s, %s, %s, %s)",
+                    (request.form['nombre'], request.form['ap_paterno'], request.form['ap_materno'], request.form['celular'], request.form['password']))
+        conn.commit()
+        cur.close(); conn.close()
+        return redirect(url_for('login'))
     return render_template('registro.html')
 
 if __name__ == '__main__':
