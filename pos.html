@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caja - Punto de Venta</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; display: flex; gap: 20px; }
+        .productos-seccion { flex: 2; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .caja-seccion { flex: 1; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between; min-height: 400px; }
+        .grid-productos { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; margin-top: 15px; }
+        .tarjeta-producto { border: 1px solid #ddd; padding: 10px; border-radius: 6px; text-align: center; cursor: pointer; background: #fafafa; transition: transform 0.2s; }
+        .tarjeta-producto:hover { transform: scale(1.03); background: #e9ecef; }
+        .tarjeta-producto img { max-width: 100%; height: 80px; object-fit: cover; border-radius: 4px; }
+        .tabla-venta { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .tabla-venta th, .tabla-venta td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+        .total-contenedor { font-size: 24px; font-weight: bold; text-align: right; margin-top: 20px; color: #28a745; }
+        .btn-cobrar { width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 6px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        .btn-cobrar:hover { background: #218838; }
+    </style>
+</head>
+<body>
+
+<div class="productos-seccion">
+    <h2>🛍️ Productos en Inventario</h2>
+    <div class="grid-productos">
+        {% for producto in productos %}
+        <div class="tarjeta-producto" onclick="agregarAlCarrito('{{ producto.id }}', '{{ producto.nombre }}', {{ producto.precio_venta }}, {{ producto.costo_compra }})">
+            {% if producto.imagen_url %}
+                <img src="{{ producto.imagen_url }}" alt="{{ producto.nombre }}">
+            {% else %}
+                <div style="height: 80px; background: #ccc; display: flex; align-items: center; justify-content: center; border-radius: 4px; margin-bottom: 5px;">📦</div>
+            {% endif %}
+            <strong>{{ producto.nombre }}</strong>
+            <p style="color: #28a745; margin: 5px 0 0 0;">${{ producto.precio_venta }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="caja-seccion">
+    <div>
+        <h2>🛒 Cuenta Actual</h2>
+        <table class="tabla-venta">
+            <thead>
+                <tr>
+                    <th>Prod</th>
+                    <th>Cant</th>
+                    <th>Precio</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpo-tabla">
+                </tbody>
+        </table>
+    </div>
+    
+    <div>
+        <div class="total-contenedor">
+            Total: $<span id="total-pago">0.00</span>
+        </div>
+        <button class="btn-cobrar" onclick="procesarCobro()">💳 Cobrar y Guardar</button>
+    </div>
+</div>
+
+<script>
+    let carrito = [];
+    let total = 0;
+    let gananciaTotal = 0;
+
+    function agregarAlCarrito(id, nombre, precio, costo) {
+        // Buscar si el producto ya está en el carrito
+        let existente = carrito.find(item => item.id === id);
+        
+        if (existente) {
+            existente.cantidad += 1;
+        } else {
+            carrito.push({ id: id, nombre: nombre, precio: precio, costo: costo, cantidad: 1 });
+        }
+        actualizarTabla();
+    }
+
+    function actualizarTabla() {
+        let cuerpo = document.getElementById('cuerpo-tabla');
+        cuerpo.innerHTML = "";
+        total = 0;
+        gananciaTotal = 0;
+
+        carrito.forEach(item => {
+            let subtotal = item.precio * item.cantidad;
+            let gananciaNeta = (item.precio - item.costo) * item.cantidad;
+            total += subtotal;
+            gananciaTotal += gananciaNeta;
+
+            cuerpo.innerHTML += `
+                <tr>
+                    <td>${item.nombre}</td>
+                    <td>${item.cantidad}</td>
+                    <td>$${subtotal.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+
+        document.getElementById('total-pago').innerText = total.toFixed(2);
+    }
+
+    function procesarCobro() {
+        if (carrito.length === 0) {
+            alert("El carrito está vacío. Agrega productos antes de cobrar.");
+            return;
+        }
+
+        // Estructura de datos idéntica a la que pide tu función 'guardar_ticket' en Python
+        let datosVenta = {
+            tipo: "Efectivo",
+            total: total,
+            ganancia: gananciaTotal,
+            productos: carrito.map(item => ({
+                nombre: item.nombre,
+                extras: [], // Se manda vacío por compatibilidad
+                precio_total_renglon: item.precio * item.cantidad
+            }))
+        };
+
+        // Enviamos la venta a Python mediante fetch (JSON)
+        fetch('/guardar_ticket', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datosVenta)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("¡Venta procesada y guardada con éxito!");
+                carrito = [];
+                actualizarTabla();
+            } else {
+                alert("Hubo un error al guardar el ticket.");
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
