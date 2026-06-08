@@ -215,5 +215,31 @@ def guardar_ticket():
         print(f"Error al guardar ticket: {e}")
         return jsonify({"success": False})
 
+
+    mensaje = None
+    if request.method == 'POST':
+        # Recogemos los datos que el usuario escribió en el formulario HTML
+        codigo = request.form['codigo']
+        nombre = request.form['nombre']
+        precio_compra = float(request.form['precio_compra'])
+        precio_venta = float(request.form['precio_venta'])
+        existencias = int(request.form['existencias'])
+        
+        # Nos conectamos a la base de datos y guardamos el producto
+        conexion = sqlite3.connect('punto_venta.db')
+        cursor = conexion.cursor()
+        try:
+            cursor.execute('''
+                INSERT INTO productos (codigo_barras, nombre, precio_compra, precio_venta, existencias)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (codigo, nombre, precio_compra, precio_venta, existencias))
+            conexion.commit()
+            mensaje = f"¡Producto '{nombre}' guardado con éxito!"
+        except sqlite3.IntegrityError:
+            mensaje = "Error: Ese código de barras ya está registrado."
+        finally:
+            conexion.close()
+            
+    return render_template('inventario.html', mensaje=mensaje)
 if __name__ == '__main__':
     app.run(debug=True)
