@@ -1,7 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session
-import psycopg2
-import uuid
-import json
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+import psycopg2, uuid
 from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
@@ -13,7 +11,7 @@ def get_db():
 
 @app.route('/')
 def index():
-    if 'vendedor' not in session: return "Acceso denegado", 403
+    if 'vendedor' not in session: return "Acceso denegado. <a href='/inventario'>Ve a generar tu link</a>", 403
     return render_template('pos.html')
 
 @app.route('/inventario')
