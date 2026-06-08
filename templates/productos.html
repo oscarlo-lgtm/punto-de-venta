@@ -2,168 +2,109 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Inventario - Punto de Venta</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditoría de Inventario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
-        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f4f7f6; }
-        h1, h2 { color: #333; }
-        .contenedor { display: flex; gap: 40px; }
-        .seccion { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex: 1; }
-        .form-grupo { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="number"], input[type="file"] { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; background: white; }
-        button { background-color: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; }
-        button:hover { background-color: #218838; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: middle; }
-        th { background-color: #007bff; color: white; }
-        .btn-tabla { padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
-        .btn-editar { background-color: #ffc107; color: #212529; margin-right: 4px; }
-        .btn-eliminar { background-color: #dc3545; color: white; }
-        .acciones { display: flex; }
-        .mini-foto { width: 45px; height: 45px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; background: #e9ecef; }
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; }
+        .navbar-custom { background: linear-gradient(135deg, #2c3e50, #34495e); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .navbar-brand, .nav-link { color: #fff !important; font-weight: 600; }
+        .card-custom { border: none; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); background: #fff; }
+        .paper-sheet { background: #ffffff; border-left: 5px solid #e74c3c; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border-radius: 4px; padding: 20px; }
+        .paper-header { border-bottom: 2px dashed #bdc3c7; padding-bottom: 15px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
     </style>
 </head>
 <body>
 
-    <h1>Panel de Administración (Inventario)</h1>
-    <p><a href="/" style="text-decoration: none; color: #007bff; font-weight: bold; font-size: 18px;">← Ir al Punto de Venta (Cobrar)</a></p>
-
-    <div class="contenedor">
-        <div class="seccion">
-            <h2>Agregar Producto Principal</h2>
-            <form action="/guardar_producto" method="POST" enctype="multipart/form-data">
-                <div class="form-grupo">
-                    <label>Nombre del Producto:</label>
-                    <input type="text" name="nombre" required placeholder="Ej. Camisa, Hamburguesa">
-                </div>
-                <div class="form-grupo">
-                    <label>Lo que a ti te cuesta comprarlo ($):</label>
-                    <input type="number" name="costo_compra" step="0.01" required placeholder="Costo de fábrica / insumos">
-                </div>
-                <div class="form-grupo">
-                    <label>Precio de Venta al Público ($):</label>
-                    <input type="number" name="precio_venta" step="0.01" required placeholder="A como lo das al cliente">
-                </div>
-                <div class="form-grupo">
-                    <label>Seleccionar Foto desde tu Galería (Imagen):</label>
-                    <input type="file" name="foto_galeria" accept="image/*">
-                </div>
-                <button type="submit">Guardar Producto</button>
-            </form>
-
-            <h2>Lista de Productos</h2>
-            <table>
-                <tr>
-                    <th>Foto</th>
-                    <th>Nombre</th>
-                    <th>Costo</th>
-                    <th>Venta</th>
-                    <th>Acciones</th>
-                </tr>
-                {% for p in productos %}
-                <tr>
-                    <td>
-                        {% if p.imagen_url %}
-                        <img src="{{ p.imagen_url }}" class="mini-foto">
-                        {% else %}
-                        <div class="mini-foto" style="display:flex; align-items:center; justify-content:center; font-size:9px; color:#aaa;">No foto</div>
-                        {% endif %}
-                    </td>
-                    <td>{{ p.nombre }}</td>
-                    <td>${{ p.costo_compra }}</td>
-                    <td>${{ p.precio_venta }}</td>
-                    <td>
-                        <div class="acciones">
-                            <button class="btn-tabla btn-editar" onclick="modificarProducto('{{ p.id }}', '{{ p.nombre }}', {{ p.costo_compra }}, {{ p.precio_venta }})">✏️ Editar Precios</button>
-                            <form action="/eliminar_producto/{{ p.id }}" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar {{ p.nombre }}?');">
-                                <button type="submit" class="btn-tabla btn-eliminar">🗑️ Borrar</button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </table>
+    <nav class="navbar navbar-expand-lg navbar-custom mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/"><i class="bi bi-cpu-fill text-info"></i> POS ÓSCAR</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/"><i class="bi bi-calculator"></i> Caja de Cobro</a>
+                <a class="nav-link active" href="/inventario"><i class="bi bi-journal-text"></i> Inventario (Auditoría)</a>
+                <a class="nav-link" href="/tickets"><i class="bi bi-receipt"></i> Historial Tickets</a>
+                <a class="nav-link text-warning" href="/ganancias" style="font-weight: bold;"><i class="bi bi-currency-dollar"></i> Ver Ganancias Privadas</a>
+            </div>
         </div>
+    </nav>
 
-        <div class="seccion">
-            <h2>Agregar Extra / Adicional</h2>
-            <form action="/guardar_extra" method="POST">
-                <div class="form-grupo">
-                    <label>Nombre del Extra:</label>
-                    <input type="text" name="nombre" required placeholder="Ej. Queso Extra">
-                </div>
-                <div class="form-grupo">
-                    <label>Lo que a ti te cuesta hacerlo ($):</label>
-                    <input type="number" name="costo_compra" step="0.01" required placeholder="Costo del extra">
-                </div>
-                <div class="form-grupo">
-                    <label>Precio de Venta al Público ($):</label>
-                    <input type="number" name="precio_venta" step="0.01" required placeholder="Precio extra para el cliente">
-                </div>
-                <button type="submit" style="background-color: #17a2b8;">Guardar Extra</button>
-            </form>
-
-            <h2>Lista de Extras</h2>
-            <table>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Costo</th>
-                    <th>Venta</th>
-                    <th>Acciones</th>
-                </tr>
-                {% for e in extras %}
-                <tr>
-                    <td>{{ e.nombre }}</td>
-                    <td>${{ e.costo_compra }}</td>
-                    <td>${{ e.precio_venta }}</td>
-                    <td>
-                        <div class="acciones">
-                            <button class="btn-tabla btn-editar" onclick="modificarExtra('{{ e.id }}', '{{ e.nombre }}', {{ e.costo_compra }}, {{ e.precio_venta }})">✏️ Editar Precios</button>
-                            <form action="/eliminar_extra/{{ e.id }}" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar el extra {{ e.nombre }}?');">
-                                <button type="submit" class="btn-tabla btn-eliminar">🗑️ Borrar</button>
-                            </form>
+    <div class="container-fluid px-4">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card card-custom p-4 mb-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-plus-circle-fill text-primary"></i> Registrar Producto</h5>
+                    <form action="/guardar_producto" method="POST" enctype="multipart/form-data">
+                        <div class="mb-3"><label class="form-label small fw-bold">Nombre</label><input type="text" name="nombre" class="form-control" required></div>
+                        <div class="row mb-3">
+                            <div class="col-6"><label class="form-label small fw-bold">Costo Compra</label><input type="number" step="0.01" name="costo_compra" class="form-control" required></div>
+                            <div class="col-6"><label class="form-label small fw-bold">Precio Público</label><input type="number" step="0.01" name="precio_venta" class="form-control" required></div>
                         </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </table>
+                        <div class="mb-3"><label class="form-label small fw-bold">Imagen</label><input type="file" name="foto_galeria" class="form-control" accept="image/*"></div>
+                        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-cloud-arrow-up"></i> Guardar Almacén</button>
+                    </form>
+                </div>
+
+                <div class="card card-custom p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-tools text-warning"></i> Alta Servicio Extra</h5>
+                    <form action="/guardar_extra" method="POST">
+                        <div class="mb-3"><label class="form-label small fw-bold">Nombre del Extra</label><input type="text" name="nombre" class="form-control" required></div>
+                        <div class="row mb-3">
+                            <div class="col-6"><label class="form-label small fw-bold">Costo Material</label><input type="number" step="0.01" name="costo_compra" class="form-control" required></div>
+                            <div class="col-6"><label class="form-label small fw-bold">Precio Cobrado</label><input type="number" step="0.01" name="precio_venta" class="form-control" required></div>
+                        </div>
+                        <button type="submit" class="btn btn-warning text-dark w-100 fw-bold"><i class="bi bi-plus-square"></i> Guardar Extra</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="paper-sheet">
+                    <div class="paper-header">
+                        <h4 class="m-0"><i class="bi bi-pencil-square text-danger"></i> Libreta de Auditoría de Inventarios</h4>
+                    </div>
+
+                    <h5 class="text-secondary border-bottom pb-2"><i class="bi bi-box-seam"></i> Listado de Productos</h5>
+                    <div class="table-responsive mb-4">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr class="table-light"><th>Imagen</th><th>Artículo</th><th>Costo Fábrica</th><th>Venta Público</th><th>Acción</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for p in productos %}
+                                <tr>
+                                    <td>{% if p.imagen_url %}<img src="{{ p.imagen_url }}" style="width:40px; height:40px; object-fit:cover; border-radius:6px;">{% else %}<i class="bi bi-image text-muted"></i>{% endif %}</td>
+                                    <td><strong>{{ p.nombre }}</strong></td>
+                                    <td class="text-muted">${{ p.costo_compra }}</td>
+                                    <td class="text-primary fw-bold">${{ p.precio_venta }}</td>
+                                    <td><form action="/eliminar_producto/{{ p.id }}" method="POST"><button class="btn btn-sm text-danger"><i class="bi bi-trash3-fill"></i></button></form></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h5 class="text-secondary border-bottom pb-2"><i class="bi bi-gear-wide-connected"></i> Servicios Extras</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr class="table-light"><th>Nombre del Extra</th><th>Costo Interno</th><th>Precio al Cliente</th><th>Acción</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for e in extras %}
+                                <tr>
+                                    <td><strong>{{ e.nombre }}</strong></td>
+                                    <td class="text-muted">${{ e.costo_compra }}</td>
+                                    <td class="text-warning fw-bold">${{ e.precio_venta }}</td>
+                                    <td><form action="/eliminar_extra/{{ e.id }}" method="POST"><button class="btn btn-sm text-danger"><i class="bi bi-trash3-fill"></i></button></form></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-
-    <script>
-        function modificarProducto(id, nombre, costoActual, precioActual) {
-            let nuevoCosto = prompt(`Modificando "${nombre}"\n\nNuevo COSTO DE COMPRA:`, costoActual);
-            if (nuevoCosto === null) return;
-            let nuevoPrecio = prompt(`Modificando "${nombre}"\n\nNuevo PRECIO DE VENTA:`, precioActual);
-            if (nuevoPrecio === null) return;
-            
-            nuevoCosto = parseFloat(nuevoCosto);
-            nuevoPrecio = parseFloat(nuevoPrecio);
-            if (isNaN(nuevoCosto) || isNaN(nuevoPrecio)) { alert("Valores incorrectos."); return; }
-
-            fetch(`/editar_producto/${id}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ costo_compra: nuevoCosto, precio_venta: nuevoPrecio })
-            }).then(res => res.json()).then(data => { if(data.success) window.location.reload(); });
-        }
-
-        function modificarExtra(id, nombre, costoActual, precioActual) {
-            let nuevoCosto = prompt(`Modificando "${nombre}"\n\nNuevo COSTO DEL EXTRA:`, costoActual);
-            if (nuevoCosto === null) return;
-            let nuevoPrecio = prompt(`Modificando "${nombre}"\n\nNuevo PRECIO DE VENTA:`, precioActual);
-            if (nuevoPrecio === null) return;
-            
-            nuevoCosto = parseFloat(nuevoCosto);
-            nuevoPrecio = parseFloat(nuevoPrecio);
-            if (isNaN(nuevoCosto) || isNaN(nuevoPrecio)) { alert("Valores incorrectos."); return; }
-
-            fetch(`/editar_extra/${id}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ costo_compra: nuevoCosto, precio_venta: nuevoPrecio })
-            }).then(res => res.json()).then(data => { if(data.success) window.location.reload(); });
-        }
-    </script>
 </body>
 </html>
