@@ -35,9 +35,9 @@ def iniciar_base_datos():
 
 iniciar_base_datos()
 
-# --- RUTAS DE SEGURIDAD Y REGISTRO ---
+# --- RUTAS DE GENERACIÓN Y REGISTRO ---
 
-@app.route('/generar_invitacion', methods=['POST'])
+@app.route('/generar_invitacion', methods=['GET', 'POST'])
 def generar_invitacion():
     token = str(uuid.uuid4())
     conexion = conectar_bd()
@@ -46,7 +46,8 @@ def generar_invitacion():
     conexion.commit()
     cursor.close()
     conexion.close()
-    return jsonify({"link": f"{request.host_url}registrar/{token}"})
+    link = f"{request.host_url}registrar/{token}"
+    return f"<h1>Tu enlace de invitación es:</h1><a href='{link}'>{link}</a>"
 
 @app.route('/registrar/<token>', methods=['GET', 'POST'])
 def registrar_usuario(token):
@@ -63,7 +64,11 @@ def registrar_usuario(token):
         cursor.execute('INSERT INTO usuarios (nombre, token, es_admin) VALUES (%s, %s, %s)', (nombre, token, False))
         cursor.execute('UPDATE invitaciones SET usado = TRUE WHERE token = %s', (token,))
         conexion.commit()
-        return "Registro exitoso."
+        session['vendedor'] = nombre
+        cursor.close()
+        conexion.close()
+        return redirect(url_for('inicio'))
+        
     return render_template('registro.html', token=token)
 
 @app.route('/login_admin', methods=['GET', 'POST'])
@@ -79,10 +84,10 @@ def login_admin():
 
 @app.route('/')
 def inicio():
-    if 'vendedor' not in session: return "Acceso denegado. Regístrate primero.", 403
+    if 'vendedor' not in session: return "Acceso denegado. Por favor, usa un enlace de invitación válido.", 403
     conexion = conectar_bd()
     cursor = conexion.cursor(cursor_factory=RealDictCursor)
-    cursor.execute('SELECT * FROM productos')
+    cursor.execute('SELECT * FROM productos ORDER BY id DESC')
     productos = cursor.fetchall()
     cursor.close()
     conexion.close()
@@ -95,6 +100,8 @@ def ver_ganancias():
     cursor = conexion.cursor(cursor_factory=RealDictCursor)
     cursor.execute('SELECT * FROM tickets ORDER BY id DESC')
     tickets = cursor.fetchall()
+    cursor.close()
+    conexion.close()
     return render_template('ganancias.html', tickets=tickets)
 
 @app.route('/guardar_ticket', methods=['POST'])
@@ -104,7 +111,7 @@ def guardar_ticket():
     conexion = conectar_bd()
     cursor = conexion.cursor()
     cursor.execute('INSERT INTO tickets (total, ganancia_neta, tipo, detalles, vendedor) VALUES (%s, %s, %s, %s, %s)', 
-                   (datos['total'], datos['ganancia'], datos['tipo'], json.dumps(datos['productos']), vendedor))
+                   (datos.get('total', 0), datos.get('ganancia', 0), datos.get('tipo', 'Venta'), json.dumps(datos.get('productos', [])), vendedor))
     conexion.commit()
     cursor.close()
     conexion.close()
