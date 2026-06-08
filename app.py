@@ -5,13 +5,14 @@ from psycopg2.extras import RealDictCursor
 app = Flask(__name__, static_folder='static')
 app.secret_key = 'JEJA_SECRETO_2026'
 
-# Tu conexión a Supabase
+# Conexión a tu base de datos
 URL_DB = "postgresql://postgres.zivpdzxvukcovqjekxpz:B0mb0nsit03@aws-1-us-west-2.pooler.supabase.com:5432/postgres"
 
 def get_db():
     return psycopg2.connect(URL_DB)
 
-# RUTA: Login (Raíz)
+# --- RUTAS DE AUTENTICACIÓN ---
+
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -24,10 +25,9 @@ def login():
         if user:
             session['vendedor'] = user['nombre']
             return redirect('/pos')
-        return "Datos incorrectos, intenta de nuevo."
+        return "Datos incorrectos."
     return render_template('login.html')
 
-# RUTA: Registro
 @app.route('/registro', methods=['GET', 'POST'])
 def registro():
     if request.method == 'POST':
@@ -41,20 +41,14 @@ def registro():
         return redirect('/')
     return render_template('registro.html')
 
-# RUTA: Sistema POS
+# --- LÓGICA DE TU POS ---
+
 @app.route('/pos')
 def pos():
     if 'vendedor' not in session: return redirect('/')
+    # Aquí va la carga de tu POS original
     return render_template('pos.html')
 
-# RUTA: Procesar Venta
-@app.route('/agregar_venta', methods=['POST'])
-def agregar_venta():
-    if 'vendedor' not in session: return redirect('/')
-    # Aquí puedes agregar luego la lógica para guardar en BD
-    return "Venta registrada con éxito. <a href='/pos'>Regresar al sistema</a>"
-
-# RUTA: Logout
 @app.route('/logout')
 def logout():
     session.pop('vendedor', None)
