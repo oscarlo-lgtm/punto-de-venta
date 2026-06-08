@@ -9,6 +9,7 @@ URL_DB = "postgresql://postgres.zivpdzxvukcovqjekxpz:B0mb0nsit03@aws-1-us-west-2
 def get_db():
     return psycopg2.connect(URL_DB)
 
+# RUTA 1: Login (Raíz)
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -22,28 +23,32 @@ def login():
         
         if usuario:
             session['vendedor'] = f"{usuario['nombre']} {usuario['ap_materno']}"
-            return redirect('/inicio')
-        return "Usuario o contraseña incorrectos"
+            return redirect('/pos')
+        return "Credenciales incorrectas."
     return render_template('login.html')
 
-@app.route('/inicio')
-def inicio():
-    if 'vendedor' not in session: return redirect('/')
-    return render_template('pos.html')
-
+# RUTA 2: Registro (Usando el token)
 @app.route('/registrar/<token>', methods=['GET', 'POST'])
 def registrar(token):
     if request.method == 'POST':
         conn = get_db()
         cur = conn.cursor()
-        # Creamos fecha uniendo los campos del formulario
-        fecha = f"{request.form['anio']}-{request.form['mes']}-{request.form['dia']}"
-        cur.execute("INSERT INTO usuarios (nombre, ap_paterno, ap_materno, fecha_nac, celular, password) VALUES (%s, %s, %s, %s, %s, %s)",
-                    (request.form['nombre'], request.form['ap_paterno'], request.form['ap_materno'], fecha, request.form['celular'], request.form['password']))
+        # Insertar usuario
+        cur.execute("""INSERT INTO usuarios (nombre, ap_paterno, ap_materno, celular, password) 
+                       VALUES (%s, %s, %s, %s, %s)""",
+                    (request.form['nombre'], request.form['ap_paterno'], request.form['ap_materno'], 
+                     request.form['celular'], request.form['password']))
+        # Marcar token como usado
+        cur.execute("UPDATE invitaciones SET usado = TRUE WHERE token = %s", (token,))
         conn.commit()
         cur.close(); conn.close()
-        return redirect('/')
-    return render_template('registro.html')
+        return redirect('/') # Regresa al login después de registrarse
+    return render_template('registro.html', token=token)
+
+@app.route('/pos')
+def pos():
+    if 'vendedor' not in session: return redirect('/')
+    return render_template('pos.html')
 
 if __name__ == '__main__':
     app.run()
