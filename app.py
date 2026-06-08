@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 
 # CADENA DE CONEXIÓN A TU BASE DE DATOS ETERNA EN LA NUBE
-URL_BASE_DATOS = "postgresql://postgres:B0mb0nsit03@db.zivpdzxvukcovqjekxpz.supabase.co:5432/postgres"
+URL_BASE_DATOS = "postgresql://postgres.zivpdzxvukcovqjekxpz:B0mb0nsit03@aws-0-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
 
 # CONFIGURACIÓN PARA SUBIR ARCHIVOS LOCALES
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
