@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Punto de Venta</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f7f6; display: flex; gap: 20px; }
+        .panel-izquierdo { flex: 2; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .panel-derecho { flex: 1; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between; }
+        
+        /* TARJETAS CON IMÁGENES AJUSTADAS */
+        .grid-productos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 15px; }
+        .tarjeta-producto { background: white; border: 2px solid #007bff; color: #333; border-radius: 8px; text-align: center; cursor: pointer; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s, box-shadow 0.2s; }
+        .tarjeta-producto:hover { transform: scale(1.03); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+        .img-producto { width: 100%; height: 100px; object-fit: cover; background-color: #e9ecef; }
+        .info-producto { padding: 8px; font-weight: bold; font-size: 14px; background: #f8f9fa; border-top: 1px solid #ddd; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+        .precio-tag { color: #007bff; font-size: 15px; margin-top: 4px; }
+        
+        .tarjeta-extra { background: #17a2b8; color: white; padding: 8px; margin: 5px 0; border-radius: 4px; cursor: pointer; font-size: 14px; text-align: center; }
+        .tarjeta-extra:hover { background: #117a8b; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #343a40; color: white; }
+        .total-caja { background: #e9ecef; padding: 15px; border-radius: 6px; font-size: 20px; font-weight: bold; margin-top: 15px; }
+        .btn { width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .btn-cobrar { background: #28a745; color: white; }
+        .btn-presupuesto { background: #ffc107; color: #212529; }
+        .menu-navegacion a { text-decoration: none; color: #007bff; font-weight: bold; margin-right: 20px; font-size: 16px; }
+        .buscador { width: 100%; padding: 10px; margin-top: 10px; margin-bottom: 5px; box-sizing: border-box; border: 2px solid #007bff; border-radius: 6px; font-size: 15px; }
+        .buscador-extra { border-color: #17a2b8; }
+    </style>
+</head>
+<body>
+
+    <div class="panel-izquierdo">
+        <h2>Punto de Venta</h2>
+        <div class="menu-navegacion">
+            <a href="/inventario">📦 Gestionar Inventario</a>
+            <a href="/tickets">📋 Ver Historial / Imprimir</a>
+        </div>
+        
+        <h3 style="margin-top: 20px;">Productos Principales</h3>
+        <input type="text" id="buscar-producto" class="buscador" onkeyup="filtrarProductos()" placeholder="🔍 Escribe para buscar un producto...">
+        
+        <div class="grid-productos" id="contenedor-productos">
+            {% for p in productos %}
+            <div class="tarjeta-producto" data-nombre="{{ p.nombre.lower() }}" onclick="agregarAlCarrito('{{ p.id }}', '{{ p.nombre }}', {{ p.precio_venta }}, {{ p.costo_compra }})">
+                {% if p.imagen_url %}
+                <img src="{{ p.imagen_url }}" class="img-producto" alt="{{ p.nombre }}">
+                {% else %}
+                <div class="img-producto" style="display:flex; align-items:center; justify-content:center; color:#aaa; font-size:12px;">Sin foto</div>
+                {% endif %}
+                <div class="info-producto">
+                    {{ p.nombre }}
+                    <div class="precio-tag">${{ p.precio_venta }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <h3 style="margin-top: 35px;">Extras Disponibles</h3>
+        <p style="font-size: 13px; color: #666; margin-bottom: 5px;">Selecciona un producto en el carrito (derecha), busca el extra y haz clic para sumarlo:</p>
+        <input type="text" id="buscar-extra" class="buscador buscador-extra" onkeyup="filtrarExtras()" placeholder="🔍 Escribe para buscar un extra...">
+        
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;" id="contenedor-extras">
+            {% for e in extras %}
+            <div class="tarjeta-extra" data-nombre="{{ e.nombre.lower() }}" onclick="agregarExtraAProducto('{{ e.nombre }}', {{ e.precio_venta }}, {{ e.costo_compra }})">
+                + {{ e.nombre }} (${{ e.precio_venta }})
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="panel-derecho">
+        <div>
+            <h2>Carrito Actual</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto (Extras)</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpo-carrito"></tbody>
+            </table>
+        </div>
+
+        <div>
+            <div class="total-caja">
+                <div>Total: $<span id="texto-total">0.00</span></div>
+                <div style="font-size: 15px; color: #28a745; margin-top: 5px;">Ganancia Neta Real: $<span id="texto-ganancia">0.00</span></div>
+            </div>
+            
+            <button class="btn btn-cobrar" onclick="finalizarTransaccion('venta')">Registrar Venta Final</button>
+            <button class="btn btn-presupuesto" onclick="finalizarTransaccion('presupuesto')">Guardar como Presupuesto</button>
+            <button class="btn" style="background:#dc3545; color:white;" onclick="limpiarCarrito()">Vaciar Carrito</button>
+        </div>
+    </div>
+
+    <script>
+        let carrito = [];
+        let indiceSeleccionado = -1;
+
+        function filtrarProductos() {
+            let texto = document.getElementById('buscar-producto').value.toLowerCase();
+            let tarjetas = document.querySelectorAll('#contenedor-productos .tarjeta-producto');
+            tarjetas.forEach(tarjeta => {
+                let nombreProducto = tarjeta.getAttribute('data-nombre');
+                tarjeta.style.display = nombreProducto.includes(texto) ? "flex" : "none";
+            });
+        }
+
+        function filtrarExtras() {
+            let texto = document.getElementById('buscar-extra').value.toLowerCase();
+            let tarjetas = document.querySelectorAll('#contenedor-extras .tarjeta-extra');
+            tarjetas.forEach(tarjeta => {
+                let nombreExtra = tarjeta.getAttribute('data-nombre');
+                tarjeta.style.display = nombreExtra.includes(texto) ? "block" : "none";
+            });
+        }
+
+        function agregarAlCarrito(id, nombre, precio, costo) {
+            carrito.push({
+                id: id,
+                nombre: nombre,
+                precio_base: precio,
+                costo_base: costo,
+                extras: [],
+                precio_total_renglon: precio,
+                ganancia_renglon: precio - costo
+            });
+            indiceSeleccionado = carrito.length - 1; 
+            actualizarTabla();
+            document.getElementById('buscar-producto').value = "";
+            filtrarProductos();
+        }
+
+        function agregarExtraAProducto(nombreExtra, precioExtra, costoExtra) {
+            if (indiceSeleccionado === -1 || carrito.length === 0) {
+                alert("Por favor, haz clic primero en un producto dentro del carrito.");
+                return;
+            }
+            carrito[indiceSeleccionado].extras.push({ nombre: nombreExtra, precio: precioExtra });
+            carrito[indiceSeleccionado].precio_total_renglon += precioExtra;
+            let gananciaDelExtra = precioExtra - costoExtra;
+            carrito[indiceSeleccionado].ganancia_renglon += gananciaDelExtra; 
+            actualizarTabla();
+            document.getElementById('buscar-extra').value = "";
+            filtrarExtras();
+        }
+
+        function seleccionarFila(index) {
+            indiceSeleccionado = index;
+            actualizarTabla();
+        }
+
+        function actualizarTabla() {
+            const cuerpo = document.getElementById('cuerpo-carrito');
+            cuerpo.innerHTML = '';
+            let granTotal = 0;
+            let granGanancia = 0;
+
+            carrito.forEach((item, index) => {
+                granTotal += item.precio_total_renglon;
+                granGanancia += item.ganancia_renglon;
+
+                let textoExtras = item.extras.map(e => e.nombre).join(', ');
+                let mostrarNombre = item.nombre + (textoExtras ? ` (<small style='color:#17a2b8;'>+ ${textoExtras}</small>)` : '');
+                let estiloSeleccionado = (index === indiceSeleccionado) ? 'background-color: #fff3cd; font-weight: bold; cursor:pointer;' : 'cursor:pointer;';
+
+                cuerpo.innerHTML += `
+                    <tr style="${estiloSeleccionado}" onclick="seleccionarFila(${index})">
+                        <td>${mostrarNombre}</td>
+                        <td>$${item.precio_total_renglon.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('texto-total').innerText = granTotal.toFixed(2);
+            document.getElementById('texto-ganancia').innerText = granGanancia.toFixed(2);
+        }
+
+        function limpiarCarrito() {
+            carrito = [];
+            indiceSeleccionado = -1;
+            actualizarTabla();
+        }
+
+        function finalizarTransaccion(tipo) {
+            if (carrito.length === 0) {
+                alert("El carrito está vacío.");
+                return;
+            }
+            let total = parseFloat(document.getElementById('texto-total').innerText);
+            let ganancia = parseFloat(document.getElementById('texto-ganancia').innerText);
+
+            fetch('/guardar_ticket', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tipo: tipo, total: total, ganancia: ganancia, productos: carrito })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    alert(tipo === 'venta' ? "¡Venta guardada con éxito!" : "¡Presupuesto guardado con éxito!");
+                    limpiarCarrito();
+                } else {
+                    alert("Error en el servidor al intentar guardar.");
+                }
+            });
+        }
+    </script>
+</body>
+</html>

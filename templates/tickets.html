@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Historial de Tickets</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f4f7f6; }
+        .seccion { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-width: 900px; margin: 0 auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #343a40; color: white; }
+        .badge-venta { background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+        .badge-presupuesto { background: #ffc107; color: #212529; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+        .btn-imprimir { background: #007bff; color: white; text-decoration: none; padding: 6px 12px; border-radius: 4px; font-size: 14px; font-weight: bold; }
+        .btn-imprimir:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+
+    <div class="seccion">
+        <h1>Historial de Operaciones</h1>
+        <p><a href="/" style="text-decoration: none; color: #007bff; font-weight: bold; font-size: 16px;">← Volver al Punto de Venta</a></p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Folio</th>
+                    <th>Fecha / Hora</th>
+                    <th>Tipo</th>
+                    <th>Total ($)</th>
+                    <th>Ganancia Neta Real ($)</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in tickets %}
+                <tr>
+                    <td>#{{ t.id }}</td>
+                    <td>{{ t.fecha }}</td>
+                    <td>
+                        {% if t.tipo == 'venta' %}
+                        <span class="badge-venta">VENTA FINAL</span>
+                        {% else %}
+                        <span class="badge-presupuesto">PRESUPUESTO</span>
+                        {% endif %}
+                    </td>
+                    <td><strong>${{ t.total }}</strong></td>
+                    <td style="color: #28a745; font-weight: bold;">${{ t.ganancia_neta }}</td>
+                    <td>
+                        <a href="/imprimir/{{ t.id }}" target="_blank" class="btn-imprimir">🖨️ Ver Ticket</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</body>
+</html>

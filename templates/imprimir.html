@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Imprimir Comprobante</title>
+    <style>
+        body { font-family: 'Courier New', Courier, monospace; margin: 20px; color: #000; background: #fff; }
+        .ticket { max-width: 320px; margin: 0 auto; padding: 10px; border: 1px dashed #000; }
+        .centrado { text-align: center; }
+        .linea { border-top: 1px dashed #000; margin: 10px 0; }
+        .tabla-productos { width: 100%; font-size: 13px; border-collapse: collapse; }
+        .tabla-productos td { padding: 4px 0; vertical-align: top; }
+        .tabla-totales { width: 100%; font-size: 15px; margin-top: 15px; }
+        .tabla-totales td { padding: 4px 0; }
+        .derecha { text-align: right; }
+        .no-imprimir { text-align: center; margin-bottom: 20px; }
+        .btn-imprimir { background: #28a745; color: white; border: none; padding: 10px 20px; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 4px; }
+        .extra-detalle { font-size: 11px; color: #444; padding-left: 10px; display: block; }
+        
+        @media print {
+            .no-imprimir { display: none; }
+            body { margin: 0; }
+            .ticket { border: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-imprimir">
+        <button class="btn-imprimir" onclick="window.print()">👉 MANDAR A IMPRESORA 🖨️</button>
+        <p><a href="/tickets" style="color: #007bff; font-weight: bold;">← Regresar al Historial</a></p>
+    </div>
+
+    <div class="ticket">
+        <h2 class="centrado" style="margin: 0 0 5px 0;">MI NEGOCIO</h2>
+        <p class="centrado" style="margin: 0; font-size: 12px;">Comprobante de Operación</p>
+        
+        <div class="linea"></div>
+        
+        <p style="margin: 5px 0; font-size: 13px;">
+            <strong>Folio:</strong> #{{ ticket.id }}<br>
+            <strong>Fecha:</strong> {{ ticket.fecha }}<br>
+            <strong>Tipo:</strong> {{ ticket.tipo.upper() }}
+        </p>
+        
+        <div class="linea"></div>
+        
+        <table class="tabla-productos">
+            <thead>
+                <tr>
+                    <th style="text-align: left;">Descripción</th>
+                    <th style="text-align: right;">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in lista_productos %}
+                <tr>
+                    <td>
+                        <strong>{{ item.nombre }}</strong>
+                        {% if item.extras %}
+                        <span class="extra-detalle">+ Extras: {{ item.extras }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="derecha">${{ "%.2f"|format(item.total_renglon) }}</td>
+                </tr>
+                {% endfor %}
+                {% if not lista_productos %}
+                <tr>
+                    <td colspan="2" class="centrado" style="font-style: italic;">Atendido en caja general</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+        
+        <div class="linea"></div>
+        
+        <table class="tabla-totales">
+            <tr>
+                <td><strong>TOTAL COMPROBANTE:</strong></td>
+                <td class="derecha"><strong>${{ "%.2f"|format(ticket.total) }}</strong></td>
+            </tr>
+        </table>
+        
+        <div class="linea"></div>
+        <p class="centrado" style="font-size: 12px; margin-top: 15px;">¡Gracias por su preferencia!</p>
+    </div>
+
+</body>
+</html>

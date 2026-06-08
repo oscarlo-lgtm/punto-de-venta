@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Inventario - Punto de Venta</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f4f7f6; }
+        h1, h2 { color: #333; }
+        .contenedor { display: flex; gap: 40px; }
+        .seccion { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex: 1; }
+        .form-grupo { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="number"], input[type="file"] { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; background: white; }
+        button { background-color: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; }
+        button:hover { background-color: #218838; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: middle; }
+        th { background-color: #007bff; color: white; }
+        .btn-tabla { padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        .btn-editar { background-color: #ffc107; color: #212529; margin-right: 4px; }
+        .btn-eliminar { background-color: #dc3545; color: white; }
+        .acciones { display: flex; }
+        .mini-foto { width: 45px; height: 45px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; background: #e9ecef; }
+    </style>
+</head>
+<body>
+
+    <h1>Panel de Administración (Inventario)</h1>
+    <p><a href="/" style="text-decoration: none; color: #007bff; font-weight: bold; font-size: 18px;">← Ir al Punto de Venta (Cobrar)</a></p>
+
+    <div class="contenedor">
+        <div class="seccion">
+            <h2>Agregar Producto Principal</h2>
+            <form action="/guardar_producto" method="POST" enctype="multipart/form-data">
+                <div class="form-grupo">
+                    <label>Nombre del Producto:</label>
+                    <input type="text" name="nombre" required placeholder="Ej. Camisa, Hamburguesa">
+                </div>
+                <div class="form-grupo">
+                    <label>Lo que a ti te cuesta comprarlo ($):</label>
+                    <input type="number" name="costo_compra" step="0.01" required placeholder="Costo de fábrica / insumos">
+                </div>
+                <div class="form-grupo">
+                    <label>Precio de Venta al Público ($):</label>
+                    <input type="number" name="precio_venta" step="0.01" required placeholder="A como lo das al cliente">
+                </div>
+                <div class="form-grupo">
+                    <label>Seleccionar Foto desde tu Galería (Imagen):</label>
+                    <input type="file" name="foto_galeria" accept="image/*">
+                </div>
+                <button type="submit">Guardar Producto</button>
+            </form>
+
+            <h2>Lista de Productos</h2>
+            <table>
+                <tr>
+                    <th>Foto</th>
+                    <th>Nombre</th>
+                    <th>Costo</th>
+                    <th>Venta</th>
+                    <th>Acciones</th>
+                </tr>
+                {% for p in productos %}
+                <tr>
+                    <td>
+                        {% if p.imagen_url %}
+                        <img src="{{ p.imagen_url }}" class="mini-foto">
+                        {% else %}
+                        <div class="mini-foto" style="display:flex; align-items:center; justify-content:center; font-size:9px; color:#aaa;">No foto</div>
+                        {% endif %}
+                    </td>
+                    <td>{{ p.nombre }}</td>
+                    <td>${{ p.costo_compra }}</td>
+                    <td>${{ p.precio_venta }}</td>
+                    <td>
+                        <div class="acciones">
+                            <button class="btn-tabla btn-editar" onclick="modificarProducto('{{ p.id }}', '{{ p.nombre }}', {{ p.costo_compra }}, {{ p.precio_venta }})">✏️ Editar Precios</button>
+                            <form action="/eliminar_producto/{{ p.id }}" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar {{ p.nombre }}?');">
+                                <button type="submit" class="btn-tabla btn-eliminar">🗑️ Borrar</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <div class="seccion">
+            <h2>Agregar Extra / Adicional</h2>
+            <form action="/guardar_extra" method="POST">
+                <div class="form-grupo">
+                    <label>Nombre del Extra:</label>
+                    <input type="text" name="nombre" required placeholder="Ej. Queso Extra">
+                </div>
+                <div class="form-grupo">
+                    <label>Lo que a ti te cuesta hacerlo ($):</label>
+                    <input type="number" name="costo_compra" step="0.01" required placeholder="Costo del extra">
+                </div>
+                <div class="form-grupo">
+                    <label>Precio de Venta al Público ($):</label>
+                    <input type="number" name="precio_venta" step="0.01" required placeholder="Precio extra para el cliente">
+                </div>
+                <button type="submit" style="background-color: #17a2b8;">Guardar Extra</button>
+            </form>
+
+            <h2>Lista de Extras</h2>
+            <table>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Costo</th>
+                    <th>Venta</th>
+                    <th>Acciones</th>
+                </tr>
+                {% for e in extras %}
+                <tr>
+                    <td>{{ e.nombre }}</td>
+                    <td>${{ e.costo_compra }}</td>
+                    <td>${{ e.precio_venta }}</td>
+                    <td>
+                        <div class="acciones">
+                            <button class="btn-tabla btn-editar" onclick="modificarExtra('{{ e.id }}', '{{ e.nombre }}', {{ e.costo_compra }}, {{ e.precio_venta }})">✏️ Editar Precios</button>
+                            <form action="/eliminar_extra/{{ e.id }}" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar el extra {{ e.nombre }}?');">
+                                <button type="submit" class="btn-tabla btn-eliminar">🗑️ Borrar</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function modificarProducto(id, nombre, costoActual, precioActual) {
+            let nuevoCosto = prompt(`Modificando "${nombre}"\n\nNuevo COSTO DE COMPRA:`, costoActual);
+            if (nuevoCosto === null) return;
+            let nuevoPrecio = prompt(`Modificando "${nombre}"\n\nNuevo PRECIO DE VENTA:`, precioActual);
+            if (nuevoPrecio === null) return;
+            
+            nuevoCosto = parseFloat(nuevoCosto);
+            nuevoPrecio = parseFloat(nuevoPrecio);
+            if (isNaN(nuevoCosto) || isNaN(nuevoPrecio)) { alert("Valores incorrectos."); return; }
+
+            fetch(`/editar_producto/${id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ costo_compra: nuevoCosto, precio_venta: nuevoPrecio })
+            }).then(res => res.json()).then(data => { if(data.success) window.location.reload(); });
+        }
+
+        function modificarExtra(id, nombre, costoActual, precioActual) {
+            let nuevoCosto = prompt(`Modificando "${nombre}"\n\nNuevo COSTO DEL EXTRA:`, costoActual);
+            if (nuevoCosto === null) return;
+            let nuevoPrecio = prompt(`Modificando "${nombre}"\n\nNuevo PRECIO DE VENTA:`, precioActual);
+            if (nuevoPrecio === null) return;
+            
+            nuevoCosto = parseFloat(nuevoCosto);
+            nuevoPrecio = parseFloat(nuevoPrecio);
+            if (isNaN(nuevoCosto) || isNaN(nuevoPrecio)) { alert("Valores incorrectos."); return; }
+
+            fetch(`/editar_extra/${id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ costo_compra: nuevoCosto, precio_venta: nuevoPrecio })
+            }).then(res => res.json()).then(data => { if(data.success) window.location.reload(); });
+        }
+    </script>
+</body>
+</html>
