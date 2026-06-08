@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario - Punto de Venta</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; }
+        .container { max-width: 600px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin: 0 auto; }
+        h2 { color: #333; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-radius; }
+        button { width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+        button:hover { background-color: #218838; }
+        .mensaje { padding: 10px; background-color: #d4edda; color: #155724; border-radius: 4px; margin-bottom: 15px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📦 Registrar Producto Nuevo</h2>
+    
+    {% if mensaje %}
+        <div class="mensaje">{{ mensaje }}</div>
+    {% endif %}
+
+    <form action="/inventario" method="POST">
+        <div class="form-group">
+            <label for="codigo">Código de Barras:</label>
+            <input type="text" id="codigo" name="codigo" placeholder="Ej. 7501055300073" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="nombre">Nombre del Producto:</label>
+            <input type="text" id="nombre" name="nombre" placeholder="Ej. Refresco Cola 600ml" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="precio_compra">Precio de Compra ($):</label>
+            <input type="number" id="precio_compra" name="precio_compra" step="0.01" placeholder="0.00" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="precio_venta">Precio de Venta ($):</label>
+            <input type="number" id="precio_venta" name="precio_venta" step="0.01" placeholder="0.00" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="existencias">Existencias Iniciales:</label>
+            <input type="number" id="existencias" name="existencias" placeholder="Ej. 10" required>
+        </div>
+        
+        <button type="submit">💾 Guardar Producto</button>
+    </form>
+</div>
+
+</body>
+</html>
