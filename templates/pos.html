@@ -1,8 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Sistema JEJA</title>
+</head>
 <body>
-    <h1>Bienvenido al Sistema de Ventas</h1>
-    <p>Sesión activa para: {{ session['vendedor'] }}</p>
-    <button onclick="window.location.href='/inventario'">Volver al Inventario</button>
+    <h1>Bienvenido, {{ session['vendedor'] }}</h1>
+    <form method="POST" action="/agregar_venta" style="width: 400px;">
+        <h2>Registrar Venta</h2>
+        <input type="text" name="producto" placeholder="Nombre del Producto" required>
+        <input type="number" name="precio" placeholder="Precio" required>
+        <button type="submit">GUARDAR VENTA</button>
+    </form>
+    <br>
+    <a href="/logout" style="color:red;">Cerrar Sesión</a>
 </body>
 </html>
