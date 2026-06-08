@@ -1,9 +1,14 @@
-<!DOCTYPE html>
-<html lang="es">
-<body>
-    <form method="POST">
-        <input type="text" name="nombre" placeholder="Nombre" required>
-        <button type="submit">Registrar y Acceder</button>
-    </form>
-</body>
-</html>
+<form method="POST">
+    <input type="text" name="nombre" placeholder="Nombre(s)" required>
+    <input type="text" name="ap_paterno" placeholder="Apellido Paterno" required>
+    <input type="text" name="ap_materno" placeholder="Apellido Materno" required>
+    
+    <label>Fecha de Nacimiento:</label>
+    <select name="dia"><script>for(let i=1;i<=31;i++) document.write(`<option>${i}</option>`);</script></select>
+    <select name="mes"><script>for(let i=1;i<=12;i++) document.write(`<option>${i}</option>`);</script></select>
+    <select name="anio"><script>for(let i=1960;i<=2026;i++) document.write(`<option>${i}</option>`);</script></select>
+    
+    <input type="text" name="celular" placeholder="Número Celular" required>
+    <input type="password" name="password" placeholder="Crear Contraseña" required>
+    <button type="submit">Registrar y Acceder</button>
+</form>
