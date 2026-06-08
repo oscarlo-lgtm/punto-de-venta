@@ -1,11 +1,22 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Login JEJA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
 <body>
-    <h2>Iniciar Sesión</h2>
+    <div class="jeja-container">
+        <span class="j1">J</span><span class="j2">E</span><span class="j3">J</span><span class="j4">A</span>
+    </div>
     <form method="POST">
-        <input type="text" name="celular" placeholder="Celular" required><br>
-        <input type="password" name="password" placeholder="Contraseña" required><br>
-        <button type="submit">Entrar al Sistema</button>
+        <h2>Iniciar Sesión</h2>
+        <input type="text" name="celular" placeholder="Número de Celular" required>
+        <input type="password" name="password" placeholder="Contraseña" required>
+        <button type="submit">ENTRAR</button>
+        <p style="text-align:center; margin-top:15px;">
+            <a href="/registro" style="color:white; text-decoration:none;">¿No tienes cuenta? Regístrate</a>
+        </p>
     </form>
 </body>
 </html>
