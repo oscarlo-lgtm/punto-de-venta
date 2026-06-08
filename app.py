@@ -5,15 +5,14 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from werkzeug.utils import secure_filename
 import random
+import uuid
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'JEJA_ADMIN_SECRET_2026' # Cambia esto por una clave muy secreta
+app.secret_key = 'JEJA_SECRETO_2026'
 
-# CADENA DE CONEXIÓN
 URL_BASE_DATOS = "postgresql://postgres.zivpdzxvukcovqjekxpz:B0mb0nsit03@aws-1-us-west-2.pooler.supabase.com:5432/postgres"
 
-# CONFIGURACIÓN
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 CARPETA_SUBIDAS = os.path.join(BASE_DIR, 'static', 'uploads')
 app.config['UPLOAD_FOLDER'] = CARPETA_SUBIDAS
@@ -25,68 +24,90 @@ def conectar_bd():
 def iniciar_base_datos():
     conexion = conectar_bd()
     cursor = conexion.cursor()
-    # Tablas existentes
-    cursor.execute('CREATE TABLE IF NOT EXISTS productos (id SERIAL PRIMARY KEY, nombre TEXT NOT NULL, costo_compra REAL NOT NULL, precio_venta REAL NOT NULL, imagen_url TEXT)')
-    cursor.execute('CREATE TABLE IF NOT EXISTS extras (id SERIAL PRIMARY KEY, nombre TEXT NOT NULL, costo_compra REAL NOT NULL, precio_venta REAL NOT NULL, imagen_url TEXT)')
-    cursor.execute('CREATE TABLE IF NOT EXISTS tickets (id SERIAL PRIMARY KEY, fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP, total REAL NOT NULL, ganancia_neta REAL NOT NULL, tipo TEXT NOT NULL, detalles TEXT, vendedor TEXT)')
-    # Nueva tabla de usuarios para control
-    cursor.execute('''CREATE TABLE IF NOT EXISTS usuarios (
-                        id SERIAL PRIMARY KEY, 
-                        nombre TEXT NOT NULL, 
-                        token TEXT UNIQUE NOT NULL, 
-                        es_admin BOOLEAN DEFAULT FALSE)''')
+    cursor.execute('CREATE TABLE IF NOT EXISTS productos (id SERIAL PRIMARY KEY, nombre TEXT, costo_compra REAL, precio_venta REAL, imagen_url TEXT)')
+    cursor.execute('CREATE TABLE IF NOT EXISTS extras (id SERIAL PRIMARY KEY, nombre TEXT, costo_compra REAL, precio_venta REAL, imagen_url TEXT)')
+    cursor.execute('CREATE TABLE IF NOT EXISTS tickets (id SERIAL PRIMARY KEY, fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP, total REAL, ganancia_neta REAL, tipo TEXT, detalles TEXT, vendedor TEXT)')
+    cursor.execute('CREATE TABLE IF NOT EXISTS usuarios (id SERIAL PRIMARY KEY, nombre TEXT, token TEXT UNIQUE, es_admin BOOLEAN DEFAULT FALSE)')
+    cursor.execute('CREATE TABLE IF NOT EXISTS invitaciones (id SERIAL PRIMARY KEY, token TEXT UNIQUE, usado BOOLEAN DEFAULT FALSE)')
     conexion.commit()
     cursor.close()
     conexion.close()
 
 iniciar_base_datos()
 
-# --- ACCESO Y SEGURIDAD ---
+# --- RUTAS DE SEGURIDAD Y REGISTRO ---
 
-@app.route('/vendedor/<token>')
-def acceso_vendedor(token):
+@app.route('/generar_invitacion', methods=['POST'])
+def generar_invitacion():
+    token = str(uuid.uuid4())
     conexion = conectar_bd()
-    cursor = conexion.cursor(cursor_factory=RealDictCursor)
-    cursor.execute('SELECT * FROM usuarios WHERE token = %s', (token,))
-    user = cursor.fetchone()
+    cursor = conexion.cursor()
+    cursor.execute('INSERT INTO invitaciones (token, usado) VALUES (%s, %s)', (token, False))
+    conexion.commit()
     cursor.close()
     conexion.close()
-    if user:
-        session['vendedor'] = user['nombre']
-        return redirect(url_for('inicio'))
-    return "Token inválido", 403
+    return jsonify({"link": f"{request.host_url}registrar/{token}"})
+
+@app.route('/registrar/<token>', methods=['GET', 'POST'])
+def registrar_usuario(token):
+    conexion = conectar_bd()
+    cursor = conexion.cursor(cursor_factory=RealDictCursor)
+    cursor.execute('SELECT * FROM invitaciones WHERE token = %s AND usado = FALSE', (token,))
+    invitacion = cursor.fetchone()
+    
+    if not invitacion:
+        return "Enlace inválido o ya utilizado.", 403
+    
+    if request.method == 'POST':
+        nombre = request.form.get('nombre')
+        cursor.execute('INSERT INTO usuarios (nombre, token, es_admin) VALUES (%s, %s, %s)', (nombre, token, False))
+        cursor.execute('UPDATE invitaciones SET usado = TRUE WHERE token = %s', (token,))
+        conexion.commit()
+        return "Registro exitoso."
+    return render_template('registro.html', token=token)
 
 @app.route('/login_admin', methods=['GET', 'POST'])
 def login_admin():
     if request.method == 'POST':
-        clave = request.form.get('clave')
-        # Aquí defines tus 3 claves maestras (cámbialas por seguridad)
-        if clave in ['admin123', 'seguridad456', 'clave789']:
-            session['admin_autenticado'] = True
+        if request.form.get('clave') in ['clave1', 'clave2', 'clave3']:
+            session['admin'] = True
             return redirect(url_for('ver_ganancias'))
         flash('Clave incorrecta')
     return render_template('login_admin.html')
 
-# --- PÁGINAS ---
+# --- PÁGINAS PRINCIPALES ---
 
 @app.route('/')
 def inicio():
-    if 'vendedor' not in session: return "Acceso no autorizado", 403
-    # ... (aquí iría tu lógica de carga de productos igual que antes)
-    return render_template('pos.html')
+    if 'vendedor' not in session: return "Acceso denegado. Regístrate primero.", 403
+    conexion = conectar_bd()
+    cursor = conexion.cursor(cursor_factory=RealDictCursor)
+    cursor.execute('SELECT * FROM productos')
+    productos = cursor.fetchall()
+    cursor.close()
+    conexion.close()
+    return render_template('pos.html', productos=productos)
 
 @app.route('/ganancias')
 def ver_ganancias():
-    if not session.get('admin_autenticado'):
-        return redirect(url_for('login_admin'))
-    # ... (tu lógica de ganancias aquí)
-    return "Panel de Ganancias Privado"
+    if not session.get('admin'): return redirect(url_for('login_admin'))
+    conexion = conectar_bd()
+    cursor = conexion.cursor(cursor_factory=RealDictCursor)
+    cursor.execute('SELECT * FROM tickets ORDER BY id DESC')
+    tickets = cursor.fetchall()
+    return render_template('ganancias.html', tickets=tickets)
 
 @app.route('/guardar_ticket', methods=['POST'])
 def guardar_ticket():
     datos = request.get_json()
-    vendedor = session.get('vendedor', 'Desconocido')
-    # Guardar en BD incluyendo el campo 'vendedor'
+    vendedor = session.get('vendedor', 'Invitado')
+    conexion = conectar_bd()
+    cursor = conexion.cursor()
+    cursor.execute('INSERT INTO tickets (total, ganancia_neta, tipo, detalles, vendedor) VALUES (%s, %s, %s, %s, %s)', 
+                   (datos['total'], datos['ganancia'], datos['tipo'], json.dumps(datos['productos']), vendedor))
+    conexion.commit()
+    cursor.close()
+    conexion.close()
     return jsonify({"success": True})
 
 if __name__ == '__main__':
