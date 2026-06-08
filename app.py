@@ -1,11 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session, flash
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 import json
 import os
 import psycopg2
+import uuid
 from psycopg2.extras import RealDictCursor
 from werkzeug.utils import secure_filename
-import random
-import uuid
 from datetime import datetime
 
 app = Flask(__name__)
@@ -35,10 +34,10 @@ def iniciar_base_datos():
 
 iniciar_base_datos()
 
-# --- RUTAS DE GENERACIÓN Y REGISTRO ---
+# --- RUTAS DE ADMINISTRACIÓN Y GENERACIÓN ---
 
-@app.route('/generar_invitacion', methods=['GET', 'POST'])
-def generar_invitacion():
+@app.route('/generar_link', methods=['POST'])
+def generar_link():
     token = str(uuid.uuid4())
     conexion = conectar_bd()
     cursor = conexion.cursor()
@@ -46,8 +45,7 @@ def generar_invitacion():
     conexion.commit()
     cursor.close()
     conexion.close()
-    link = f"{request.host_url}registrar/{token}"
-    return f"<h1>Tu enlace de invitación es:</h1><a href='{link}'>{link}</a>"
+    return jsonify({"link": f"https://puntodeventa-bdc9.onrender.com/registrar/{token}"})
 
 @app.route('/registrar/<token>', methods=['GET', 'POST'])
 def registrar_usuario(token):
@@ -57,7 +55,7 @@ def registrar_usuario(token):
     invitacion = cursor.fetchone()
     
     if not invitacion:
-        return "Enlace inválido o ya utilizado.", 403
+        return "Este enlace ya fue utilizado o no es válido.", 403
     
     if request.method == 'POST':
         nombre = request.form.get('nombre')
@@ -68,34 +66,46 @@ def registrar_usuario(token):
         cursor.close()
         conexion.close()
         return redirect(url_for('inicio'))
-        
+    
     return render_template('registro.html', token=token)
-
-@app.route('/login_admin', methods=['GET', 'POST'])
-def login_admin():
-    if request.method == 'POST':
-        if request.form.get('clave') in ['clave1', 'clave2', 'clave3']:
-            session['admin'] = True
-            return redirect(url_for('ver_ganancias'))
-        flash('Clave incorrecta')
-    return render_template('login_admin.html')
 
 # --- PÁGINAS PRINCIPALES ---
 
 @app.route('/')
 def inicio():
-    if 'vendedor' not in session: return "Acceso denegado. Por favor, usa un enlace de invitación válido.", 403
+    if 'vendedor' not in session: return "Acceso denegado. Registrate primero.", 403
     conexion = conectar_bd()
     cursor = conexion.cursor(cursor_factory=RealDictCursor)
     cursor.execute('SELECT * FROM productos ORDER BY id DESC')
     productos = cursor.fetchall()
+    cursor.execute('SELECT * FROM extras ORDER BY id DESC')
+    extras = cursor.fetchall()
     cursor.close()
     conexion.close()
-    return render_template('pos.html', productos=productos)
+    return render_template('pos.html', productos=productos, extras=extras)
+
+@app.route('/inventario')
+def inventario():
+    conexion = conectar_bd()
+    cursor = conexion.cursor(cursor_factory=RealDictCursor)
+    cursor.execute('SELECT * FROM productos ORDER BY id DESC')
+    productos = cursor.fetchall()
+    cursor.execute('SELECT * FROM extras ORDER BY id DESC')
+    extras = cursor.fetchall()
+    cursor.close()
+    conexion.close()
+    return render_template('productos.html', productos=productos, extras=extras)
 
 @app.route('/ganancias')
 def ver_ganancias():
-    if not session.get('admin'): return redirect(url_for('login_admin'))
+    # Protegido por session['admin']
+    if not session.get('admin'): 
+        clave = request.args.get('clave')
+        if clave == 'JEJA2026': # Clave de acceso
+            session['admin'] = True
+        else:
+            return "Acceso restringido a administradores.", 403
+            
     conexion = conectar_bd()
     cursor = conexion.cursor(cursor_factory=RealDictCursor)
     cursor.execute('SELECT * FROM tickets ORDER BY id DESC')
@@ -111,7 +121,7 @@ def guardar_ticket():
     conexion = conectar_bd()
     cursor = conexion.cursor()
     cursor.execute('INSERT INTO tickets (total, ganancia_neta, tipo, detalles, vendedor) VALUES (%s, %s, %s, %s, %s)', 
-                   (datos.get('total', 0), datos.get('ganancia', 0), datos.get('tipo', 'Venta'), json.dumps(datos.get('productos', [])), vendedor))
+                   (datos['total'], datos['ganancia'], datos['tipo'], json.dumps(datos['productos']), vendedor))
     conexion.commit()
     cursor.close()
     conexion.close()
