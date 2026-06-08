@@ -1,0 +1,55 @@
+/* Esto es lo que le da color al JEJA */
+body { 
+    font-family: 'Arial', sans-serif; 
+    background: #222; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center; 
+    height: 100vh; 
+    color: white; 
+}
+
+.jeja-container { 
+    font-size: 80px; 
+    font-weight: bold; 
+    margin-bottom: 20px; 
+    text-align: center;
+}
+
+.j1 { color: #FF5733; }
+.j2 { color: #33FF57; }
+.j3 { color: #3357FF; }
+.j4 { color: #F3FF33; }
+
+/* Esto estiliza tus formularios */
+form { 
+    background: #333; 
+    padding: 30px; 
+    border-radius: 15px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
+    width: 300px; 
+}
+
+input { 
+    width: 100%; 
+    padding: 10px; 
+    margin: 10px 0; 
+    border: none; 
+    border-radius: 5px; 
+    box-sizing: border-box;
+}
+
+button { 
+    width: 100%; 
+    padding: 10px; 
+    background: #6200ea; 
+    color: white; 
+    border: none; 
+    border-radius: 5px; 
+    cursor: pointer; 
+    font-weight: bold; 
+    font-size: 16px;
+}
+
+button:hover { background: #7c43ff; }
