@@ -1,23 +1,18 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
+<html>
 <body>
     <form method="POST">
-        <h2>Registro de Vendedor</h2>
-        <input type="text" name="nombre" placeholder="Nombre(s)" required>
-        <input type="text" name="ap_paterno" placeholder="Apellido Paterno" required>
-        <input type="text" name="ap_materno" placeholder="Apellido Materno" required>
-        
-        <label>Fecha Nac:</label>
+        <h2>Registro</h2>
+        <input type="text" name="nombre" placeholder="Nombre(s)" required><br>
+        <input type="text" name="ap_paterno" placeholder="Apellido Paterno" required><br>
+        <input type="text" name="ap_materno" placeholder="Apellido Materno" required><br>
+        <label>Fecha Nacimiento:</label><br>
         <select name="dia"><script>for(let i=1;i<=31;i++) document.write(`<option>${i}</option>`);</script></select>
         <select name="mes"><script>for(let i=1;i<=12;i++) document.write(`<option>${i}</option>`);</script></select>
         <select name="anio"><script>for(let i=1960;i<=2026;i++) document.write(`<option>${i}</option>`);</script></select>
-        
-        <input type="text" name="celular" placeholder="Celular" required>
-        <input type="password" name="password" placeholder="Contraseña" required>
-        <button type="submit">Entrar al Sistema</button>
+        <br><input type="text" name="celular" placeholder="Celular" required><br>
+        <input type="password" name="password" placeholder="Contraseña" required><br>
+        <button type="submit">Guardar y Entrar</button>
     </form>
 </body>
 </html>
