@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Ganancias Privadas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f1f5f9; font-family: 'Segoe UI', sans-serif; }
+        .navbar-custom { background: linear-gradient(135deg, #2c3e50, #34495e); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .navbar-brand, .nav-link { color: #fff !important; font-weight: 600; }
+        .card-money-sales { background: linear-gradient(135deg, #3498db, #2980b9); color: white; border: none; border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3); }
+        .card-money-profit { background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; border: none; border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3); }
+        .icon-floating { font-size: 3rem; opacity: 0.25; position: absolute; right: 20px; bottom: 10px; }
+        .card-custom { border: none; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); background: #fff; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-custom mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/"><i class="bi bi-cpu-fill text-info"></i> POS ÓSCAR</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/"><i class="bi bi-calculator"></i> Caja de Cobro</a>
+                <a class="nav-link" href="/inventario"><i class="bi bi-journal-text"></i> Inventario (Auditoría)</a>
+                <a class="nav-link" href="/tickets"><i class="bi bi-receipt"></i> Historial Tickets</a>
+                <a class="nav-link active text-warning" href="/ganancias" style="font-weight: bold;"><i class="bi bi-currency-dollar"></i> Ver Ganancias Privadas</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-2">
+        <h2 class="mb-4 text-secondary"><i class="bi bi-shield-lock-fill text-danger"></i> Bóveda de Reportes Financieros</h2>
+        
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card card-money-sales position-relative">
+                    <div>TOTAL DE VENTAS AL PÚBLICO</div>
+                    <h1 class="display-5 fw-bold">${{ "%.2f"|format(total_ventas) }}</h1>
+                    <i class="bi bi-currency-dollar icon-floating"></i>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card card-money-profit position-relative">
+                    <div>GANANCIA NETA TOTAL (Libre de costos)</div>
+                    <h1 class="display-5 fw-bold">${{ "%.2f"|format(total_ganancias) }}</h1>
+                    <i class="bi bi-cash-stack icon-floating" style="opacity: 0.3; font-size: 3.5rem;"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-custom p-4">
+            <h5 class="text-muted mb-3"><i class="bi bi-graph-up-arrow text-success"></i> Desglose por Operación Individual</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr><th>ID Ticket</th><th>Fecha / Hora</th><th>Tipo</th><th>Monto Cobrado</th><th>Ganancia Neta</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for ticket in tickets %}
+                        <tr>
+                            <td><strong>#{{ ticket.id }}</strong></td>
+                            <td>{{ ticket.fecha.strftime('%d/%m/%Y %H:%M') if ticket.fecha else 'N/A' }}</td>
+                            <td><span class="badge bg-light text-dark">{{ ticket.tipo }}</span></td>
+                            <td class="text-primary fw-bold">${{ ticket.total }}</td>
+                            <td class="text-success fw-bold">+ ${{ ticket.ganancia_neta }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
