@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Imprimir Comprobante</title>
+    <title>Imprimir Comprobante - JEJA</title>
     <style>
         body { font-family: 'Courier New', Courier, monospace; margin: 20px; color: #000; background: #fff; }
         .ticket { max-width: 320px; margin: 0 auto; padding: 10px; border: 1px dashed #000; }
@@ -15,7 +15,7 @@
         .derecha { text-align: right; }
         .no-imprimir { text-align: center; margin-bottom: 20px; }
         .btn-imprimir { background: #28a745; color: white; border: none; padding: 10px 20px; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 4px; }
-        .extra-detalle { font-size: 11px; color: #444; padding-left: 10px; display: block; }
+        .extra-detalle { font-size: 11px; color: #333; padding-left: 8px; display: block; font-style: italic; }
         
         @media print {
             .no-imprimir { display: none; }
@@ -28,12 +28,13 @@
 
     <div class="no-imprimir">
         <button class="btn-imprimir" onclick="window.print()">👉 MANDAR A IMPRESORA 🖨️</button>
-        <p><a href="/tickets" style="color: #007bff; font-weight: bold;">← Regresar al Historial</a></p>
+        <p><a href="/tickets" style="color: #007bff; font-weight: bold; text-decoration: none;">← Regresar al Historial</a></p>
     </div>
 
     <div class="ticket">
-        <h2 class="centrado" style="margin: 0 0 5px 0;">MI NEGOCIO</h2>
-        <p class="centrado" style="margin: 0; font-size: 12px;">Comprobante de Operación</p>
+        <h2 class="centrado" style="margin: 0 0 3px 0; font-size: 20px; letter-spacing: 1px;">PUNTO DE VENTA JEJA</h2>
+        <p class="centrado" style="margin: 0 0 5px 0; font-size: 11px; font-weight: bold; text-transform: uppercase;">Calidad, Tecnología y Servicio a su Alcance</p>
+        <p class="centrado" style="margin: 0; font-size: 12px; color: #333;">Comprobante de Operación</p>
         
         <div class="linea"></div>
         
@@ -48,8 +49,8 @@
         <table class="tabla-productos">
             <thead>
                 <tr>
-                    <th style="text-align: left;">Descripción</th>
-                    <th style="text-align: right;">Total</th>
+                    <th style="text-align: left; font-size: 13px;">Descripción</th>
+                    <th style="text-align: right; font-size: 13px;">Total</th>
                 </tr>
             </thead>
             <tbody>
@@ -58,7 +59,13 @@
                     <td>
                         <strong>{{ item.nombre }}</strong>
                         {% if item.extras %}
-                        <span class="extra-detalle">+ Extras: {{ item.extras }}</span>
+                            {% if item.extras is string %}
+                                <span class="extra-detalle">+ {{ item.extras }}</span>
+                            {% else %}
+                                {% for ex in item.extras %}
+                                    <span class="extra-detalle">- Con {{ ex.nombre }}</span>
+                                {% endfor %}
+                            {% endif %}
                         {% endif %}
                     </td>
                     <td class="derecha">${{ "%.2f"|format(item.total_renglon) }}</td>
@@ -82,7 +89,7 @@
         </table>
         
         <div class="linea"></div>
-        <p class="centrado" style="font-size: 12px; margin-top: 15px;">¡Gracias por su preferencia!</p>
+        <p class="centrado" style="font-size: 12px; margin-top: 15px; font-weight: bold;">¡Gracias por su preferencia!</p>
     </div>
 
 </body>
