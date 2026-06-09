@@ -5,13 +5,13 @@ from psycopg2.extras import RealDictCursor
 app = Flask(__name__, static_folder='static')
 app.secret_key = 'JEJA_SECRETO_2026'
 
-# Conexión a Supabase
+# Tu conexión a Supabase
 URL_DB = "postgresql://postgres.zivpdzxvukcovqjekxpz:B0mb0nsit03@aws-1-us-west-2.pooler.supabase.com:5432/postgres"
 
 def get_db():
     return psycopg2.connect(URL_DB)
 
-# --- LOGIN Y REGISTRO ---
+# --- RUTAS DE LOGIN Y REGISTRO ---
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -24,7 +24,7 @@ def login():
         if user:
             session['vendedor'] = user['nombre']
             return redirect('/pos')
-        return "Datos incorrectos."
+        return "Datos incorrectos, intenta de nuevo."
     return render_template('login.html')
 
 @app.route('/registro', methods=['GET', 'POST'])
@@ -40,7 +40,7 @@ def registro():
         return redirect('/')
     return render_template('registro.html')
 
-# --- LÓGICA DEL POS (Lo que ya tenías) ---
+# --- TU PUNTO DE VENTA (EL ORIGINAL) ---
 @app.route('/pos', methods=['GET', 'POST'])
 def pos():
     if 'vendedor' not in session: return redirect('/')
@@ -48,13 +48,16 @@ def pos():
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
+    # Procesar nueva venta
     if request.method == 'POST':
         cur.execute("INSERT INTO ventas (producto, precio) VALUES (%s, %s)", 
                     (request.form['producto'], request.form['precio']))
         conn.commit()
     
+    # Obtener historial de ventas
     cur.execute("SELECT * FROM ventas ORDER BY id DESC")
     ventas = cur.fetchall()
+    
     cur.close(); conn.close()
     return render_template('pos.html', ventas=ventas, vendedor=session['vendedor'])
 
