@@ -2,26 +2,32 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <title>Punto de Venta JEJA</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <title>Sistema JEJA - POS</title>
 </head>
 <body>
-    <div class="jeja-container"><span class="j1">J</span><span class="j2">E</span><span class="j3">J</span><span class="j4">A</span></div>
-    <h1>Bienvenido, {{ vendedor }}</h1>
+    <div class="jeja-container">
+        <span class="j1">J</span><span class="j2">E</span><span class="j3">J</span><span class="j4">A</span>
+    </div>
     
+    <div style="text-align: center; color: white;">
+        <h1>POS - Vendedor: {{ vendedor }}</h1>
+    </div>
+
     <form method="POST">
-        <input type="text" name="producto" placeholder="Producto" required>
+        <input type="text" name="producto" placeholder="Nombre del Producto" required>
         <input type="number" step="0.01" name="precio" placeholder="Precio" required>
         <button type="submit">GUARDAR VENTA</button>
     </form>
 
-    <div style="margin-top:20px;">
-        <h3>Historial de Ventas</h3>
+    <div style="background: #333; padding: 20px; border-radius: 10px; margin-top: 20px; color: white;">
+        <h3>Últimas ventas:</h3>
         {% for v in ventas %}
-            <p>{{ v.producto }} - ${{ v.precio }}</p>
+            <p>{{ v.producto }} - <b>${{ v.precio }}</b></p>
         {% endfor %}
     </div>
+
     <br>
-    <a href="/logout" style="color:red;">Cerrar Sesión</a>
+    <a href="/logout" style="color:red; display:block; text-align:center;">Cerrar Sesión</a>
 </body>
 </html>
