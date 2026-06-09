@@ -1,46 +1,49 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
-import json
 import os
+import json
 import psycopg2
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 from psycopg2.extras import RealDictCursor
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
-# CADENA DE CONEXIÓN A TU BASE DE DATOS
-URL_BASE_DATOS = "postgresql://postgres:B0mb0nsit03@db.zivpdzxvukcovqjekxpz.supabase.co:5432/postgres"
+# CONFIGURACIÓN DE BASE DE DATOS
+# Render leerá la variable DATABASE_URL que configuraste en el panel
+URL_BASE_DATOS = os.environ.get('DATABASE_URL')
 
 # CONFIGURACIÓN PARA SUBIR ARCHIVOS
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 CARPETA_SUBIDAS = os.path.join(BASE_DIR, 'static', 'uploads')
-EXTENSIONES_PERMITIDAS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 app.config['UPLOAD_FOLDER'] = CARPETA_SUBIDAS
+EXTENSIONES_PERMITIDAS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
-# MODIFICACIÓN DE SEGURIDAD PARA RENDER
+# Crear carpeta de subidas de forma segura
 if not os.path.exists(CARPETA_SUBIDAS):
     try:
         os.makedirs(CARPETA_SUBIDAS, exist_ok=True)
     except OSError:
-        pass 
-
-def archivo_permitido(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in EXTENSIONES_PERMITIDAS
+        pass
 
 def conectar_bd():
+    if not URL_BASE_DATOS:
+        raise ValueError("La variable DATABASE_URL no está configurada en el entorno")
     return psycopg2.connect(URL_BASE_DATOS)
 
 def iniciar_base_datos():
     conexion = conectar_bd()
     cursor = conexion.cursor()
-    cursor.execute('''CREATE TABLE IF NOT EXISTS productos (id SERIAL PRIMARY KEY, nombre TEXT NOT NULL, costo_compra REAL NOT NULL, precio_venta REAL NOT NULL, imagen_url TEXT)''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS extras (id SERIAL PRIMARY KEY, nombre TEXT NOT NULL, costo_compra REAL NOT NULL, precio_venta REAL NOT NULL)''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS tickets (id SERIAL PRIMARY KEY, fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP, total REAL NOT NULL, ganancia_neta REAL NOT NULL, tipo TEXT NOT NULL, detalles TEXT)''')
+    cursor.execute('CREATE TABLE IF NOT EXISTS productos (id SERIAL PRIMARY KEY, nombre TEXT NOT NULL, costo_compra REAL NOT NULL, precio_venta REAL NOT NULL, imagen_url TEXT)')
+    cursor.execute('CREATE TABLE IF NOT EXISTS extras (id SERIAL PRIMARY KEY, nombre TEXT NOT NULL, costo_compra REAL NOT NULL, precio_venta REAL NOT NULL)')
+    cursor.execute('CREATE TABLE IF NOT EXISTS tickets (id SERIAL PRIMARY KEY, fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP, total REAL NOT NULL, ganancia_neta REAL NOT NULL, tipo TEXT NOT NULL, detalles TEXT)')
     conexion.commit()
     cursor.close()
     conexion.close()
 
-# Inicializamos tablas al arrancar
-iniciar_base_datos()
+# Inicializar tablas al arrancar
+try:
+    iniciar_base_datos()
+except Exception as e:
+    print(f"Error al conectar a la BD: {e}")
 
 # --- RUTAS ---
 
@@ -68,37 +71,15 @@ def inventario():
     conexion.close()
     return render_template('productos.html', productos=productos, extras=extras)
 
-@app.route('/tickets')
-def ver_tickets():
-    conexion = conectar_bd()
-    cursor = conexion.cursor(cursor_factory=RealDictCursor)
-    cursor.execute('SELECT * FROM tickets ORDER BY id DESC')
-    todos_los_tickets = cursor.fetchall()
-    cursor.close()
-    conexion.close()
-    return render_template('tickets.html', tickets=todos_los_tickets)
-
-@app.route('/ganancias')
-def ver_ganancias():
-    conexion = conectar_bd()
-    cursor = conexion.cursor(cursor_factory=RealDictCursor)
-    cursor.execute('SELECT * FROM tickets ORDER BY id DESC')
-    todos_los_tickets = cursor.fetchall()
-    total_ventas = sum(t['total'] for t in todos_los_tickets)
-    total_ganancias = sum(t['ganancia_neta'] for t in todos_los_tickets)
-    cursor.close()
-    conexion.close()
-    return render_template('ganancias.html', tickets=todos_los_tickets, total_ventas=total_ventas, total_ganancias=total_ganancias)
-
 @app.route('/guardar_producto', methods=['POST'])
 def guardar_producto():
-    nombre = request.form.get('nombre', 'Producto Sin Nombre')
-    costo_compra = float(request.form.get('costo_compra', 0.0))
-    precio_venta = float(request.form.get('precio_venta', 0.0))
+    nombre = request.form.get('nombre', 'Producto')
+    costo_compra = float(request.form.get('costo_compra', 0))
+    precio_venta = float(request.form.get('precio_venta', 0))
     ruta_imagen = ""
     if 'foto_galeria' in request.files:
         archivo = request.files['foto_galeria']
-        if archivo and archivo.filename != '' and archivo_permitido(archivo.filename):
+        if archivo and archivo.filename != '':
             nombre_limpio = secure_filename(archivo.filename)
             archivo.save(os.path.join(app.config['UPLOAD_FOLDER'], nombre_limpio))
             ruta_imagen = f"/static/uploads/{nombre_limpio}"
@@ -109,8 +90,6 @@ def guardar_producto():
     cursor.close()
     conexion.close()
     return redirect(url_for('inventario'))
-
-# (Las rutas restantes: guardar_extra, editar_producto, eliminar_producto, etc. van aquí igual que antes)
 
 if __name__ == '__main__':
     app.run()
