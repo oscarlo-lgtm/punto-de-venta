@@ -3,16 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <title>Sistema JEJA</title>
+    <title>Sistema JEJA - POS</title>
 </head>
 <body>
-    <h1>Bienvenido, {{ session['vendedor'] }}</h1>
-    <form method="POST" action="/agregar_venta" style="width: 400px;">
-        <h2>Registrar Venta</h2>
-        <input type="text" name="producto" placeholder="Nombre del Producto" required>
-        <input type="number" name="precio" placeholder="Precio" required>
+    <div class="jeja-container"><span class="j1">J</span><span class="j2">E</span><span class="j3">J</span><span class="j4">A</span></div>
+    <h1>Bienvenido, {{ vendedor }}</h1>
+    
+    <form method="POST">
+        <input type="text" name="producto" placeholder="Producto" required>
+        <input type="number" step="0.01" name="precio" placeholder="Precio" required>
         <button type="submit">GUARDAR VENTA</button>
     </form>
+
+    <div style="margin-top:20px;">
+        <h3>Historial de Ventas</h3>
+        {% for v in ventas %}
+            <p>{{ v.producto }} - ${{ v.precio }}</p>
+        {% endfor %}
+    </div>
     <br>
     <a href="/logout" style="color:red;">Cerrar Sesión</a>
 </body>
