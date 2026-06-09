@@ -11,7 +11,6 @@ URL_DB = "postgresql://postgres.zivpdzxvukcovqjekxpz:B0mb0nsit03@aws-1-us-west-2
 def get_db():
     return psycopg2.connect(URL_DB)
 
-# --- RUTAS DE LOGIN Y REGISTRO ---
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -24,8 +23,25 @@ def login():
         if user:
             session['vendedor'] = user['nombre']
             return redirect('/pos')
-        return "Datos incorrectos, intenta de nuevo."
+        return "Datos incorrectos"
     return render_template('login.html')
+
+@app.route('/pos', methods=['GET', 'POST'])
+def pos():
+    if 'vendedor' not in session: return redirect('/')
+    
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    if request.method == 'POST':
+        cur.execute("INSERT INTO ventas (producto, precio) VALUES (%s, %s)", 
+                    (request.form['producto'], request.form['precio']))
+        conn.commit()
+    
+    cur.execute("SELECT * FROM ventas ORDER BY id DESC")
+    ventas = cur.fetchall()
+    cur.close(); conn.close()
+    return render_template('pos.html', ventas=ventas, vendedor=session['vendedor'])
 
 @app.route('/registro', methods=['GET', 'POST'])
 def registro():
@@ -39,27 +55,6 @@ def registro():
         cur.close(); conn.close()
         return redirect('/')
     return render_template('registro.html')
-
-# --- TU PUNTO DE VENTA (EL ORIGINAL) ---
-@app.route('/pos', methods=['GET', 'POST'])
-def pos():
-    if 'vendedor' not in session: return redirect('/')
-    
-    conn = get_db()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-    
-    # Procesar nueva venta
-    if request.method == 'POST':
-        cur.execute("INSERT INTO ventas (producto, precio) VALUES (%s, %s)", 
-                    (request.form['producto'], request.form['precio']))
-        conn.commit()
-    
-    # Obtener historial de ventas
-    cur.execute("SELECT * FROM ventas ORDER BY id DESC")
-    ventas = cur.fetchall()
-    
-    cur.close(); conn.close()
-    return render_template('pos.html', ventas=ventas, vendedor=session['vendedor'])
 
 @app.route('/logout')
 def logout():
